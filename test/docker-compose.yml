@@ -1,0 +1,86 @@
+version: "3.7"
+services:
+
+  generator:
+    build: generator
+    volumes:
+      - server:/mnt/server
+      - zeus:/mnt/zeus
+      - plato:/mnt/plato
+      - hercules:/mnt/hercules
+
+  mars:
+    build: www
+    hostname: mars
+    networks:
+      firewall:
+        ipv4_address: 10.180.1.100
+
+  neptune:
+    build: www
+    hostname: neptune
+    networks:
+      firewall:
+        ipv4_address: 10.180.1.150
+
+  zeus:
+    build: client
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - web
+    volumes:
+      - zeus:/mnt/vpn
+
+  plato:
+    build: client
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - web
+    volumes:
+      - plato:/mnt/vpn
+
+  hercules:
+    build: client
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - web
+    volumes:
+      - hercules:/mnt/vpn
+
+  vpn:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    image: openvpn-aws
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      net.ipv4.ip_forward: 1
+    networks:
+      firewall:
+        ipv4_address: 10.180.1.10
+      web:
+        ipv4_address: 10.180.0.10
+    volumes:
+      - server:/mnt/vpn
+    command: ["--local", "/mnt/vpn"]
+
+
+networks:
+  firewall:
+    ipam:
+      config:
+        - subnet: "10.180.1.0/24"
+  web:
+    ipam:
+      config:
+        - subnet: "10.180.0.0/24"
+
+volumes:
+  server:
+  zeus:
+  plato:
+  hercules:

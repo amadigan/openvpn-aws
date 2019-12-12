@@ -1,0 +1,72 @@
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 300;
+  src: local('Noto Sans Display Light'), local('NotoSansDisplay-Light'), url('fonts/NotoSansDisplay-Light.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 300;
+  font-style: italic;
+  src: local('Noto Sans Display Light Italic'), local('NotoSansDisplay-LightItalic'), url('fonts/NotoSansDisplay-LightItalic.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  src: local('Noto Sans Display Regular'), local('NotoSansDisplay-Regular'), url('fonts/NotoSansDisplay-Regular.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-style: italic;
+  src: local('Noto Sans Display Italic'), local('NotoSansDisplay-Italic'), url('fonts/NotoSansDisplay-Italic.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 500;
+  src: local('Noto Sans Display Medium'), local('NotoSansDisplay-Medium'), url('fonts/NotoSansDisplay-Medium.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 500;
+  font-style: italic;
+  src: local('Noto Sans Display Medium Italic'), local('NotoSansDisplay-MediumItalic'), url('fonts/NotoSansDisplay-MediumItalic.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 700;
+  src: local('Noto Sans Display Bold'), local('NotoSansDisplay-Bold'), url('fonts/NotoSansDisplay-Bold.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Display';
+  font-weight: 700;
+  font-style: italic;
+  src: local('Noto Sans Display Bold Italic'), local('NotoSansDisplay-BoldItalic'), url('fonts/NotoSansDisplay-BoldItalic.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  font-weight: 300;
+  src: local('Noto Sans Mono Light'), local('NotoSansMono-Light'), url('fonts/NotoSansMono-Light.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  src: local('Noto Sans Mono Regular'), local('NotoSansMono-Regular'), url('fonts/NotoSansMono-Regular.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  font-weight: 500;
+  src: local('Noto Sans Mono Medium'), local('NotoSansMono-Medium'), url('fonts/NotoSansMono-Medium.woff2');
+}
+
+@font-face {
+  font-family: 'Noto Sans Mono';
+  font-weight: 700;
+  src: local('Noto Sans Mono Bold'), local('NotoSansMono-Bold'), url('fonts/NotoSansMono-Bold.woff2');
+}

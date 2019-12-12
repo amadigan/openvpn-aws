@@ -1,0 +1,40 @@
+{
+  "name": "openvpn-aws",
+  "version": "0.2.0",
+  "description": "UI for openvpn-aws",
+  "main": "app.js",
+  "author": "amadigan",
+  "license": "Apache-2.0",
+  "private": "true",
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^1.3.0",
+    "@rollup/plugin-alias": "^2.2.0",
+    "@rollup/plugin-node-resolve": "^6.0.0",
+    "cssnano": "^4.1.10",
+    "node-sass": "^4.13.0",
+    "rollup": "^1.27.9",
+    "rollup-plugin-babel-minify": "^9.1.1",
+    "rollup-plugin-cleanup": "^3.1.1",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-copy": "^3.1.0",
+    "rollup-plugin-postcss": "^2.0.3"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.25",
+    "@fortawesome/free-brands-svg-icons": "^5.12.0",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "bootstrap": "^4.4.1",
+    "bootswatch": "^4.4.1",
+    "clipboard": "^2.0.4",
+    "jquery": "^3.4.1",
+    "js-yaml": "^3.13.1",
+    "marked": "^0.7.0",
+    "mustache": "^3.1.0",
+    "popper.js": "^1.16.0"
+  },
+  "scripts": {
+    "prod": "rollup --config --environment BUILD:prod",
+    "dev": "rollup --config",
+    "clean": "rm -rf dist"
+  }
+}

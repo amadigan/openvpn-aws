@@ -1,0 +1,4 @@
+subnet-vpn 10.180.1.0/26
+subnet-mars 10.180.1.64/26
+subnet-neptune 10.180.1.128/26
+subnet-other 10.180.1.192/26
