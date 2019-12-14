@@ -8,11 +8,10 @@ export default class UserInfoPage {
     this.app = app;
   }
 
-  show() {
-    loadTemplate('userinfo.md', {username: 'Username', title: 'openvpn-aws'}).then(md=>{
-      document.querySelector('title').innerText = md.frontmatter.title;
-      JSDT.exec(this.app.container, this.render, this, md);
-    });
+  async show() {
+    let md = await loadTemplate('userinfo.md', {username: 'Username', title: 'openvpn-aws'});
+    document.querySelector('title').innerText = md.frontmatter.title;
+    JSDT.exec(this.app.container, this.render, this, md);
   }
 
   render(form, md) {
@@ -69,7 +68,7 @@ export default class UserInfoPage {
     }
   }
 
-  next() {
+  async next() {
     let username = this.nameInput.val().trim();
 
     let app = this.app;
@@ -113,19 +112,17 @@ export default class UserInfoPage {
       if (app.keyPair) {
         app.show(pubKeyPage);
       } else {
-        generateKey(app.config.bits).then(pair=>{
-          app.keyPair = pair;
+        let pair = await generateKey(app.config.bits);
+        app.keyPair = pair;
 
-          Promise.all([
-            crypto.subtle.exportKey('spki', pair.publicKey),
-            exportSSHPublicKey(pair.publicKey)
-          ]).then(items=>{
-            let [spki, sshKey] = items;
-            app.publicKey = new Uint8Array(spki);
-            app.sshPublicKey = sshKey;
-            app.show(pubKeyPage);
-          });
-        });
+        try {
+          let [spki, sshKey] = await Promise.all([crypto.subtle.exportKey('spki', pair.publicKey), exportSSHPublicKey(pair.publicKey)]);
+          app.publicKey = new Uint8Array(spki);
+          app.sshPublicKey = sshKey;
+          app.show(pubKeyPage);
+        } catch (e) {
+          console.log(e);
+        }
       }
     }
   }

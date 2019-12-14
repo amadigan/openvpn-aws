@@ -17,12 +17,14 @@ class VPNApp {
     });
   }
 
-  show(promise, ...args) {
-    promise.then(mod=>new mod.default(this, ...args).show());
+  async show(promise, ...args) {
+    let mod = await promise;
+    new mod.default(this, ...args).show();
   }
 }
 
-window.onload = ()=>{
+window.onload = async function() {
   let infopage = import('./userinfo.js');
-  request('config.json', 'json').then(config=>new VPNApp(config).show(infopage));
-}
+  let config = await request('config.json', 'json');
+  new VPNApp(config).show(infopage);
+};

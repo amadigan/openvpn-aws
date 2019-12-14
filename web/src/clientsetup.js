@@ -11,7 +11,7 @@ export default class FilePage {
     this.vpn = vpn;
   }
 
-  show() {
+  async show() {
     let variables = {
       username: this.app.settings.username,
       appleIcon: iconHTML(faApple),
@@ -26,11 +26,10 @@ export default class FilePage {
     }
 
     this.app.container.fadeOut();
-    loadTemplate('clientsetup.md', {vpnName: 'vpn'}, variables).then(md=>{
-      JSDT.exec(this.app.container, this.render, this, md);
-      this.app.container.fadeIn();
-    });
-    this.app.container.fadeOut(()=>this.app.container.exec(this.render, this).fadeIn());
+
+    let md = await loadTemplate('clientsetup.md', {vpnName: 'vpn'}, variables);
+    JSDT.exec(this.app.container, this.render, this, md);
+    this.app.container.fadeIn();
   }
 
   render(page, md) {

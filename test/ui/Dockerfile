@@ -12,5 +12,5 @@ COPY test/ui/nginx.conf /etc/nginx/nginx.conf
 COPY test/ui/docker-entrypoint.sh /
 RUN chmod +x /docker-entrypoint.sh
 WORKDIR /srv/www
-COPY --from=build /source/dist/ ./
+COPY --from=build /source/dist/openvpn-aws/ ./
 ENTRYPOINT ["/docker-entrypoint.sh"]

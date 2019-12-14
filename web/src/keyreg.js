@@ -17,12 +17,11 @@ export default class PublicKeyPage {
     this.app = app;
   }
 
-  show() {
+  async show() {
     this.app.container.fadeOut();
-    loadTemplate('keyreg.md', {next: 'I have registered my public key'}, {username: this.app.settings.username}).then(md=>{
-      JSDT.exec(this.app.container, this.render, this, md);
-      this.app.container.fadeIn();
-    });
+    let md = await loadTemplate('keyreg.md', {next: 'I have registered my public key'}, {username: this.app.settings.username});
+    JSDT.exec(this.app.container, this.render, this, md);
+    this.app.container.fadeIn();
   }
 
   render(page, md) {
@@ -70,7 +69,7 @@ export default class PublicKeyPage {
     page.button = this.div(['row']).div(['col-12']).button(['btn', 'btn-primary'], md.frontmatter.next).on('click', e=>page.next());
   }
 
-  next() {
+  async next() {
     JSDT.exec(this.button, renderLoading);
 
     let app = this.app;
@@ -94,13 +93,14 @@ export default class PublicKeyPage {
 
     let filePage = import('./clientsetup.js');
 
-    Promise.all([
-      keyPromise,
-      generateCertificate(this.app.settings.username, this.app.keyPair, this.app.publicKey),
-      request('config.ovpn'),
-      request(app.config.cacert)
-    ]).then(items=>{
-      let [privkey, pubcert, baseConfig, cacert] = items;
+    try {
+      let [privkey, pubcert, baseConfig, cacert] = await Promise.all([
+          keyPromise,
+          generateCertificate(this.app.settings.username, this.app.keyPair, this.app.publicKey),
+          request('config.ovpn'),
+          request(app.config.cacert)
+        ]);
+
       app.privateKey = privkey;
       app.certificate = pubcert;
 
@@ -122,35 +122,36 @@ export default class PublicKeyPage {
       }
 
       app.show(filePage, vpn);
-    })
+    } catch (e) {
+      console.log(e);
+    }
   }
 
 }
 
-function generateCertificate(name, pair, spki) {
-  return crypto.subtle.digest({name: 'SHA-256'}, spki).then(hash=>{
-    let keyHash = hex(hash);
+async function generateCertificate(name, pair, spki) {
+  let hash = await crypto.subtle.digest({name: 'SHA-256'}, spki);
+  let keyHash = hex(hash);
 
-    let serial = crypto.getRandomValues(new Uint8Array(16));
+  let serial = crypto.getRandomValues(new Uint8Array(16));
 
-    return buildX509Certificate({
-      subject: {cn: name},
-      issuer: {ou: keyHash, cn: name},
-      serial: serial,
-      spki: spki,
-      notBefore: new Date(),
-      notAfter: 'never'
-    }, pair.privateKey)
-  });
+  return buildX509Certificate({
+    subject: {cn: name},
+    issuer: {ou: keyHash, cn: name},
+    serial: serial,
+    spki: spki,
+    notBefore: new Date(),
+    notAfter: 'never'
+  }, pair.privateKey);
 }
 
-function generatePassword() {
+async function generatePassword() {
   let buf = crypto.getRandomValues(new Uint8Array(128));
   let salt = crypto.getRandomValues(new Uint8Array(32));
 
-  return crypto.subtle.importKey('raw', buf, {name: 'HKDF'}, false, ['deriveBits'])
-    .then(key=>crypto.subtle.deriveBits({name: 'HKDF', hash: {name: 'SHA-256'}, info: new Uint8Array(), salt: salt}, key, 256))
-    .then(key=>base64.encode(new Uint8Array(key), base64.url));
+  let key = await crypto.subtle.importKey('raw', buf, {name: 'HKDF'}, false, ['deriveBits']);
+  key = await crypto.subtle.deriveBits({name: 'HKDF', hash: {name: 'SHA-256'}, info: new Uint8Array(), salt: salt}, key, 256);
+  return base64.encode(new Uint8Array(key), base64.url);
 }
 
 function toPEM(type, value) {

@@ -1,5 +1,5 @@
 {
-  "bits": 2048,
+  "bits": 4096,
   "remote": "vpn.example.com 1194 udp",
-  "cacert": "ca.crt"
+  "cacert": "serverca.crt"
 }

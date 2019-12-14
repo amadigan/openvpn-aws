@@ -28,10 +28,11 @@ const rollupPlugins = [
   postcss({plugins: postcssPlugins}),
   copy({
     targets: [
-      {src: 'src/index.html', dest: 'dist/'},
-      {src: 'src/fonts/*.woff2', dest: 'dist/fonts/'},
-      {src: 'src/*.md', dest: 'dist/'},
-      {src: 'conf/*', dest: 'dist/'}
+      {src: 'src/index.html', dest: 'dist/openvpn-aws/'},
+      {src: 'src/fonts/*.woff2', dest: 'dist/openvpn-aws/fonts/'},
+      {src: 'src/*.md', dest: 'dist/openvpn-aws/'},
+      {src: 'conf/*', dest: 'dist/openvpn-aws/'},
+      {src: 'src/robots.txt', dest: 'dist/openvpn-aws/'}
     ]
   }),
 ];
@@ -39,7 +40,7 @@ const rollupPlugins = [
 const rollupConfig = {
   input: ['src/app.js'],
   output: {
-    dir: 'dist',
+    dir: 'dist/openvpn-aws',
     format: 'esm'
   },
   plugins: rollupPlugins,
