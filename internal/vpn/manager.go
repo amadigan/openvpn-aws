@@ -346,7 +346,7 @@ func findInterfaceByAddress(addr net.IP) (*net.Interface, error) {
 	return nil, nil
 }
 
-func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]string) error {
+func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]string, reauth bool) error {
 	userName := env["X509_1_CN"]
 	keyHash := env["X509_1_OU"]
 
@@ -378,17 +378,22 @@ func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]stri
 	command += "END"
 
 	m.lock.Lock()
-	oldConnection := m.clients[clientId]
+	var oldConnection *clientConnection
 
-	if oldConnection != nil {
-		delete(m.clients, clientId)
-		oldUserConnection := m.userConnections[oldConnection.user]
-		if oldUserConnection != nil && oldUserConnection.clientId == clientId {
-			delete(m.userConnections, oldConnection.user)
+	if !reauth {
+		oldConnection = m.clients[clientId]
+
+		if oldConnection != nil {
+			delete(m.clients, clientId)
+			oldUserConnection := m.userConnections[oldConnection.user]
+			if oldUserConnection != nil && oldUserConnection.clientId == clientId {
+				delete(m.userConnections, oldConnection.user)
+			}
 		}
+
+		oldConnection = m.userConnections[userName]
 	}
 
-	oldConnection = m.userConnections[userName]
 	connection := &clientConnection{user: userName, clientId: clientId, key: keyAlias, conf: conf}
 
 	m.clients[clientId] = connection
@@ -435,8 +440,8 @@ func (m *VPNManager) processClientEvent(e *VPNClientEvent) {
 		logger.Debug(e.Environment)
 	}
 
-	if e.Type == "CONNECT" {
-		m.authorizeClient(e.ClientId, e.KeyId, e.Environment)
+	if e.Type == "CONNECT" || e.Type == "REAUTH" {
+		m.authorizeClient(e.ClientId, e.KeyId, e.Environment, e.Type == "REAUTH")
 	} else if e.Type == "ADDRESS" {
 		m.lock.Lock()
 		conn := m.clients[e.ClientId]
