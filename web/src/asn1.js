@@ -378,7 +378,7 @@ class ASN1Null {
   }
 }
 
-export function buildX509Certificate(params, signKey) {
+export async function buildX509Certificate(params, signKey) {
   let tbs = new ASN1Sequence();
   tbs.add(new ASN1Tag(0xA0, new ASN1Integer(2))); // version (2 = v3)
   tbs.add(new ASN1Integer(params.serial));
@@ -388,13 +388,11 @@ export function buildX509Certificate(params, signKey) {
   tbs.add(new X509Name(params.subject));
   tbs.add(new ASN1Bytes(params.spki));
   let tbsBuffer = encodeASN1(tbs);
-  return crypto.subtle.sign({name: 'RSASSA-PKCS1-v1_5'}, signKey, tbsBuffer).then(signature=>{
-    let cert = new ASN1Sequence(new ASN1Bytes(tbsBuffer));
-    cert.add(new ASN1Sequence(OID.RSA_WITH_SHA384));
-    cert.add(new ASN1BitString(signature));
-    return encodeASN1(cert);
-  });
-
+  let signature = await crypto.subtle.sign({name: 'RSASSA-PKCS1-v1_5'}, signKey, tbsBuffer);
+  let cert = new ASN1Sequence(new ASN1Bytes(tbsBuffer));
+  cert.add(new ASN1Sequence(OID.RSA_WITH_SHA384));
+  cert.add(new ASN1BitString(signature));
+  return encodeASN1(cert);
 }
 
 function encodeASN1(asn1, pad) {
@@ -406,50 +404,40 @@ function encodeASN1(asn1, pad) {
   return buf.data;
 }
 
-function deriveKey(salt, password) {
+async function deriveKey(salt, password) {
   let passBuf = new TextEncoder().encode(password);
-
-  return crypto.subtle.importKey('raw', passBuf, {name: 'PBKDF2'}, false, ['deriveKey', 'deriveBits'])
-    .then(pbKey=>{
-      return crypto.subtle.deriveBits({name: 'PBKDF2', salt: salt, iterations: 2048, hash: 'SHA-256'}, pbKey, 256);
-    })
-    .then(raw=>{
-      return crypto.subtle.importKey('raw', raw, {name: 'AES-CBC'}, false, ['encrypt']);
-    })
-    .catch(e=>console.log('deriveKey failed: ' + e));
+  let pbKey = await crypto.subtle.importKey('raw', passBuf, {name: 'PBKDF2'}, false, ['deriveKey', 'deriveBits']);
+  let raw = await crypto.subtle.deriveBits({name: 'PBKDF2', salt: salt, iterations: 2048, hash: 'SHA-256'}, pbKey, 256);
+  return crypto.subtle.importKey('raw', raw, {name: 'AES-CBC'}, false, ['encrypt']);
 }
 
-function generateIV() {
+async function generateIV() {
   let random = crypto.getRandomValues(new Uint8Array(64));
   let salt = crypto.getRandomValues(new Uint8Array(32));
-
-  return crypto.subtle.importKey('raw', random, {name: 'HKDF'}, false, ['deriveBits'])
-    .then(key=>crypto.subtle.deriveBits({name: 'HKDF', hash: {name: 'SHA-256'}, info: new Uint8Array(), salt: salt}, key, 128));
+  let key = await crypto.subtle.importKey('raw', random, {name: 'HKDF'}, false, ['deriveBits']);
+  return crypto.subtle.deriveBits({name: 'HKDF', hash: {name: 'SHA-256'}, info: new Uint8Array(), salt: salt}, key, 128);
 }
 
-export function encryptKey(key, password) {
+export async function encryptKey(key, password) {
   let salt = crypto.getRandomValues(new Uint8Array(32));
-  return Promise.all([deriveKey(salt, password), crypto.subtle.exportKey('pkcs8', key), generateIV()]).then(items=>{
-    let [aesKey, pkcs8, iv] = items;
 
-    return crypto.subtle.encrypt({name: 'AES-CBC', iv: iv}, aesKey, pkcs8).then(crypted=>{
-      let pk5 = new ASN1Sequence();
-      let header = new ASN1Sequence();
-      pk5.add(header);
-      header.add(OID.PBES2);
-      let pbes = new ASN1Sequence();
-      header.add(pbes);
-      let pbkdf = new ASN1Sequence(OID.PBKDF2);
-      pbes.add(pbkdf);
-      let params = new ASN1Sequence(new ASN1OctetString(salt), new ASN1Integer(2048));
-      pbkdf.add(params);
-      params.add(new ASN1Sequence(OID.PBKDF2_HMAC_SHA256, new ASN1Null()));
+  let [aesKey, pkcs8, iv] = await Promise.all([deriveKey(salt, password), crypto.subtle.exportKey('pkcs8', key), generateIV()]);
+  let crypted = await crypto.subtle.encrypt({name: 'AES-CBC', iv: iv}, aesKey, pkcs8);
+  let pk5 = new ASN1Sequence();
+  let header = new ASN1Sequence();
+  pk5.add(header);
+  header.add(OID.PBES2);
+  let pbes = new ASN1Sequence();
+  header.add(pbes);
+  let pbkdf = new ASN1Sequence(OID.PBKDF2);
+  pbes.add(pbkdf);
+  let params = new ASN1Sequence(new ASN1OctetString(salt), new ASN1Integer(2048));
+  pbkdf.add(params);
+  params.add(new ASN1Sequence(OID.PBKDF2_HMAC_SHA256, new ASN1Null()));
 
-      pbes.add(new ASN1Sequence(OID.AES256_CBC, new ASN1OctetString(iv)));
-      pk5.add(new ASN1OctetString(crypted));
-      return encodeASN1(pk5);
-    })
-  });
+  pbes.add(new ASN1Sequence(OID.AES256_CBC, new ASN1OctetString(iv)));
+  pk5.add(new ASN1OctetString(crypted));
+  return encodeASN1(pk5);
 }
 
 class MPInt {
@@ -479,28 +467,27 @@ class MPInt {
   }
 }
 
-export function exportSSHPublicKey(key) {
-  return crypto.subtle.exportKey('jwk', key).then(jwk=>{
-    let type = new TextEncoder().encode('ssh-rsa');
-    let e = new MPInt(base64.decode(jwk.e));
-    let n = new MPInt(base64.decode(jwk.n));
+export async function exportSSHPublicKey(key) {
+  let jwk = await crypto.subtle.exportKey('jwk', key);
+  let type = new TextEncoder().encode('ssh-rsa');
+  let e = new MPInt(base64.decode(jwk.e));
+  let n = new MPInt(base64.decode(jwk.n));
 
-    let length = 12 + type.length + e.length + n.length;
+  let length = 12 + type.length + e.length + n.length;
 
-    let view = new DataView(new ArrayBuffer(length));
+  let view = new DataView(new ArrayBuffer(length));
 
-    let pos = 0;
+  let pos = 0;
 
-    view.setUint32(pos, type.length);
-    pos += 4;
+  view.setUint32(pos, type.length);
+  pos += 4;
 
-    for (let b of type) {
-      view.setUint8(pos++, b);
-    }
+  for (let b of type) {
+    view.setUint8(pos++, b);
+  }
 
-    pos = e.write(pos, view);
-    pos = n.write(pos, view);
+  pos = e.write(pos, view);
+  pos = n.write(pos, view);
 
-    return 'ssh-rsa ' + base64.encode(new Uint8Array(view.buffer)) + '\n';
-  });
+  return 'ssh-rsa ' + base64.encode(new Uint8Array(view.buffer)) + '\n';
 }

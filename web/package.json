@@ -33,6 +33,7 @@
     "popper.js": "^1.16.0"
   },
   "scripts": {
+    "dist": "npm run clean && npm run prod && tar -czf dist/openvpn-aws.tar.gz dist/openvpn-aws",
     "prod": "rollup --config --environment BUILD:prod",
     "dev": "rollup --config",
     "clean": "rm -rf dist"

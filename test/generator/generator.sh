@@ -86,4 +86,4 @@ fi
 [ ! -f /mnt/plato/client.crt ] && mkuser plato
 
 cp -r /vpn/* /mnt/server/
-cp -r /mnt/server/ca.crt /mnt/ui/
+cp -r /mnt/server/ca.crt /mnt/ui/serverca.crt
