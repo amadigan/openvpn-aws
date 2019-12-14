@@ -4,3 +4,4 @@ _site
 node_modules
 web/dist
 web/build
+.local

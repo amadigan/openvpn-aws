@@ -211,7 +211,6 @@ export class JSDT extends TagLib {
   }
 
   static exec(el, template, ...args) {
-    let start = Date.now();
     let root = new JSDT();
     let rv = template.apply(root, args);
 
@@ -227,12 +226,6 @@ export class JSDT extends TagLib {
       for (let load of root.$load) {
         load.apply(el);
       }
-    }
-
-    let renderTime = Date.now() - start;
-
-    if (renderTime > 0) {
-      console.log('Render time: ' + renderTime + ' ms');
     }
 
     return rv;
