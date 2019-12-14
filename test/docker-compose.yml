@@ -8,6 +8,7 @@ services:
       - zeus:/mnt/zeus
       - plato:/mnt/plato
       - hercules:/mnt/hercules
+      - ui:/mnt/ui
 
   mars:
     build: www
@@ -68,6 +69,15 @@ services:
       - server:/mnt/vpn
     command: ["--local", "/mnt/vpn"]
 
+  ui:
+    build:
+      context: ..
+      dockerfile: test/ui/Dockerfile
+    volumes:
+      - ../web/.local/tls:/srv/tls
+      - ui:/mnt/ui
+    ports:
+      - "443"
 
 networks:
   firewall:
@@ -84,3 +94,4 @@ volumes:
   zeus:
   plato:
   hercules:
+  ui:
