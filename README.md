@@ -5,5 +5,5 @@ used today, but it should be regarded as experimental, and more documentation is
 
 For more information about using openvpn-aws, please see the [project website](https://amadigan.github.io/openvpn-aws/).
 
-If you are looking for information about how to build or modify openvpn-aws, see the documentation in the `build` and `ui`
+If you are looking for information about how to build or modify openvpn-aws, see the documentation in the `build` and `web`
 directories.
