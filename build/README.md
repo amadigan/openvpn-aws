@@ -15,8 +15,10 @@ Dependencies:
 ```
 go get github.com/amadigan/openvpn-aws
 cd github.com/amadigan/openvpn-aws
-go build ./...
+go install ./...
 ```
+
+The final binary will be installed to `$GOPATH/bin/openvpn-aws`
 
 ## Building the client
 See the README.md in web/
@@ -29,6 +31,12 @@ From the **root** of the repository, run:
 
 ```
 docker build -t openvpn-aws -f build/Dockerfile .
+```
+
+This is equivalent to running:
+```
+cd test
+docker-compose build vpn
 ```
 
 The Docker build has two parts, first using `golang:1-alpine`, it builds the server binary. The commands in the first section
