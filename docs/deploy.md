@@ -100,6 +100,7 @@ Below is an example ECS task definition in JSON. The most important points are:
 - Command: `--s3, s3://example-vpn/conf, --loglevel, info`
 - Image: `amadigan/openvpn-aws`
 - Auto-configure CloudWatch Logs
+- ```"linuxParameters": {"capabilities": ["NET_ADMIN"]},``` which can only be added via JSON, or set privileged to true
 
 ```
 {
@@ -130,7 +131,7 @@ Below is an example ECS task definition in JSON. The most important points are:
                 "--loglevel",
                 "info"
             ],
-            "linuxParameters": null,
+            "linuxParameters": {"capabilities": ["NET_ADMIN"]},
             "cpu": 0,
             "environment": null,
             "resourceRequirements": null,
@@ -160,7 +161,7 @@ Below is an example ECS task definition in JSON. The most important points are:
             "readonlyRootFilesystem": null,
             "dockerLabels": null,
             "systemControls": null,
-            "privileged": true,
+            "privileged": false,
             "name": "vpn",
             "repositoryCredentials": {
                 "credentialsParameter": ""
