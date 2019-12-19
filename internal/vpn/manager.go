@@ -353,14 +353,14 @@ func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]stri
 	if _, exists := env["tls_digest_sha256_3"]; exists {
 		errString := fmt.Sprintf("Denying user %s with key hash %s, depth too high", userName, keyHash)
 		logger.Warn(errString)
-		return m.Server.ExecCommand(fmt.Sprintf("client-deny %d %d \"%s\"", clientId, keyId, errString))
+		return m.Server.ExecCommand(fmt.Sprintf("client-deny %d %d \"%s\"", clientId, keyId, errString), true)
 	}
 
 	conf, keyAlias, err := m.users.authenticateUser(userName, keyHash)
 
 	if err != nil {
 		logger.Errorf("Authentication error %s", err)
-		return m.Server.ExecCommand(fmt.Sprintf("client-deny %d %d \"%s\"", clientId, keyId, err))
+		return m.Server.ExecCommand(fmt.Sprintf("client-deny %d %d \"%s\"", clientId, keyId, err), true)
 	}
 
 	command := fmt.Sprintf("client-auth %d %d\n", clientId, keyId)
@@ -403,7 +403,7 @@ func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]stri
 
 	if oldConnection != nil {
 		logger.Infof("Killing old connection %d for user %s", oldConnection.clientId, userName)
-		m.Server.ExecCommand(fmt.Sprintf("client-kill %d", oldConnection.clientId))
+		m.Server.ExecCommand(fmt.Sprintf("client-kill %d", oldConnection.clientId), false)
 	}
 
 	if log.LogLevel <= log.DEBUG {
@@ -412,7 +412,7 @@ func (m *VPNManager) authorizeClient(clientId, keyId uint64, env map[string]stri
 		logger.Infof("Authorizing client %d for user %s", clientId, userName)
 	}
 
-	return m.Server.ExecCommand(command)
+	return m.Server.ExecCommand(command, true)
 }
 
 func (m *VPNManager) DisconnectUser(user string) error {
@@ -427,7 +427,7 @@ func (m *VPNManager) DisconnectUser(user string) error {
 	m.lock.Unlock()
 
 	if connection != nil {
-		return m.Server.ExecCommand(fmt.Sprintf("client-kill %d", connection.clientId))
+		return m.Server.ExecCommand(fmt.Sprintf("client-kill %d", connection.clientId), false)
 	}
 
 	return nil
@@ -451,12 +451,15 @@ func (m *VPNManager) processClientEvent(e *VPNClientEvent) {
 	} else if e.Type == "DISCONNECT" {
 		m.lock.Lock()
 		conn := m.clients[e.ClientId]
-		delete(m.clients, e.ClientId)
 
-		userConn := m.userConnections[conn.user]
+		if conn != nil {
+			delete(m.clients, e.ClientId)
 
-		if userConn.clientId == e.ClientId {
-			delete(m.userConnections, conn.user)
+			userConn := m.userConnections[conn.user]
+
+			if userConn.clientId == e.ClientId {
+				delete(m.userConnections, conn.user)
+			}
 		}
 
 		m.lock.Unlock()
