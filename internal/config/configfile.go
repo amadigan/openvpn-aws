@@ -53,6 +53,7 @@ type ConfigFile struct {
 	Route53Zone     string
 	DomainName      string
 	Route53Weighted bool
+	KeyStrength     int
 	GlobalConfig    *SectionConfig
 	Groups          map[string]*SectionConfig
 	Users           map[string]*SectionConfig
@@ -209,6 +210,10 @@ func (config *ConfigFile) String() string {
 
 	if config.Network != nil {
 		rv += fmt.Sprintf("\tnet %s\n", config.Network.String())
+	}
+
+	if config.KeyStrength != 0 {
+		rv += fmt.Sprintf("\tkey-strength %d\n", config.KeyStrength)
 	}
 
 	for _, section := range config.Groups {
@@ -528,6 +533,20 @@ func parseGlobal(configFile *ConfigFile, stmt *ConfigStatement) (isglobal bool, 
 			}
 		}
 
+		return true, nil
+
+	case "key-strength":
+		if len(stmt.Fields) != 1 {
+			return true, fmt.Errorf("config:%d key-strength must have exactly 1 argument", stmt.Line)
+		}
+
+		strength, err := strconv.Atoi(stmt.Fields[0])
+
+		if err != nil {
+			return true, fmt.Errorf("config:%d invalid key-strength %s", stmt.Line, stmt.Fields[0])
+		}
+
+		configFile.KeyStrength = strength
 		return true, nil
 	}
 

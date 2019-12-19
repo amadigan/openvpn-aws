@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -19,20 +20,39 @@ type LocalConfig struct {
 	Root string
 }
 
-func (c *LocalConfig) FetchFile(path string) (io.ReadCloser, error) {
-	file, err := os.Open(filepath.Join(c.Root, path))
+func (c *LocalConfig) FetchFile(path string, ifNotTag string) (io.ReadCloser, string, error) {
+	path = filepath.Join(c.Root, path)
+	info, err := os.Stat(path)
 
 	if err != nil {
 		logger.Errorf("Error retrieving %s: %s", path, err)
 
 		if errors.Is(err, os.ErrNotExist) {
-			return nil, nil
+			return nil, "", nil
 		} else {
-			return nil, err
+			return nil, "", err
 		}
 	}
 
-	return file, nil
+	tag := strconv.FormatInt(info.ModTime().UnixNano(), 10)
+
+	if tag == ifNotTag {
+		return nil, tag, nil
+	}
+
+	file, err := os.Open(path)
+
+	if err != nil {
+		logger.Errorf("Error retrieving %s: %s", path, err)
+
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, "", nil
+		} else {
+			return nil, "", err
+		}
+	}
+
+	return file, tag, nil
 }
 
 func (c *LocalConfig) PutFile(path string, data []byte) error {
@@ -51,7 +71,7 @@ func (c *LocalConfig) PutFile(path string, data []byte) error {
 }
 
 func (c *LocalConfig) FetchNetworkInfo() (*NetworkInfo, error) {
-	file, err := c.FetchFile("netinfo")
+	file, _, err := c.FetchFile("netinfo", "")
 
 	if file == nil {
 		return nil, err
@@ -104,7 +124,7 @@ func (c *LocalConfig) FetchNetworkInfo() (*NetworkInfo, error) {
 }
 
 func (c *LocalConfig) FetchGroup(name string) ([]string, error) {
-	file, err := c.FetchFile("groups")
+	file, _, err := c.FetchFile("groups", "")
 
 	if file == nil {
 		logger.Errorf("Failed to open groups file: %s", err)
@@ -129,7 +149,7 @@ func (c *LocalConfig) FetchGroup(name string) ([]string, error) {
 }
 
 func (c *LocalConfig) FetchGroupsForUser(user string) ([]string, error) {
-	file, err := c.FetchFile("groups")
+	file, _, err := c.FetchFile("groups", "")
 
 	if file == nil {
 		return nil, err

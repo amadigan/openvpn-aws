@@ -114,21 +114,35 @@ func isError(err error, code string) bool {
 	return false
 }
 
-func (c *AWSConfig) FetchFile(key string) (io.ReadCloser, error) {
+func (c *AWSConfig) FetchFile(key string, ifNotTag string) (io.ReadCloser, string, error) {
 	keyPath := path.Join(c.s3path, key)
-	out, err := c.s3.GetObject(&s3.GetObjectInput{
+	getObject := s3.GetObjectInput{
 		Bucket: aws.String(c.s3bucket),
-		Key:    aws.String(keyPath),
-	})
+		Key:    &keyPath,
+	}
+
+	if ifNotTag != "" {
+		getObject.IfNoneMatch = &ifNotTag
+	}
+
+	out, err := c.s3.GetObject(&getObject)
 
 	if err != nil {
 		if isError(err, s3.ErrCodeNoSuchKey) || isError(err, "AccessDenied") {
-			return nil, nil
+			return nil, "", nil
+		} else if isError(err, "NotModified") {
+			return nil, ifNotTag, nil
 		}
-		return nil, fmt.Errorf("Error retrieving %s/%s: %w", c.s3bucket, keyPath, err)
+		return nil, "", fmt.Errorf("Error retrieving %s/%s: %w", c.s3bucket, keyPath, err)
 	}
 
-	return out.Body, nil
+	var tag string
+
+	if out.ETag != nil {
+		tag = *out.ETag
+	}
+
+	return out.Body, tag, nil
 }
 
 func (c *AWSConfig) PutFile(key string, data []byte) error {

@@ -11,7 +11,7 @@ type NetworkInfo struct {
 }
 
 type ConfigurationBackend interface {
-	FetchFile(path string) (io.ReadCloser, error)
+	FetchFile(path string, ifNotTag string) (reader io.ReadCloser, tag string, err error)
 	PutFile(path string, data []byte) error
 	FetchNetworkInfo() (*NetworkInfo, error)
 	FetchGroup(name string) ([]string, error)
