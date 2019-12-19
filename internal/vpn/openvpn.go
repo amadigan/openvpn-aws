@@ -19,7 +19,7 @@ type OpenVPN struct {
 	StateChannel  chan *VPNStateEvent
 	ClientChannel chan *VPNClientEvent
 	cmd           *exec.Cmd
-	cmdChannel    chan string
+	cmdChannel    chan vpnCommand
 	respChannel   chan error
 }
 
@@ -42,6 +42,11 @@ type VPNClientEvent struct {
 	Primary     bool              // only for ADDRESS
 	Address     net.IPNet         // only for ADDRESS
 	Environment map[string]string // nil for ADDRESS
+}
+
+type vpnCommand struct {
+	command        string
+	expectResponse bool
 }
 
 func StartOpenVPN(socketPath, config string, cert, key []byte, network net.IPNet) (*OpenVPN, error) {
@@ -115,7 +120,7 @@ func StartOpenVPN(socketPath, config string, cert, key []byte, network net.IPNet
 
 	vpnman := new(OpenVPN)
 
-	vpnman.cmdChannel = make(chan string)
+	vpnman.cmdChannel = make(chan vpnCommand)
 	vpnman.respChannel = make(chan error)
 	vpnman.StateChannel = make(chan *VPNStateEvent)
 	vpnman.ClientChannel = make(chan *VPNClientEvent)
@@ -170,13 +175,13 @@ func (m *OpenVPN) run(listener *net.UnixListener) {
 	readChannel := make(chan string)
 	go m.readerChannel(reader, readChannel)
 
-	err = sendCommand("state on", readChannel, conn)
+	err = sendCommand("state on", true, readChannel, conn)
 
 	if err != nil {
 		panic(err)
 	}
 
-	err = sendCommand("hold release", readChannel, conn)
+	err = sendCommand("hold release", true, readChannel, conn)
 
 	if err != nil {
 		panic(err)
@@ -189,25 +194,32 @@ func (m *OpenVPN) run(listener *net.UnixListener) {
 			break
 		}
 
-		response := sendCommand(command, readChannel, conn)
+		response := sendCommand(command.command, command.expectResponse, readChannel, conn)
 
-		m.respChannel <- response
+		if command.expectResponse {
+			m.respChannel <- response
+		}
+
 	}
 }
 
-func sendCommand(command string, readChannel chan string, conn *net.UnixConn) error {
+func sendCommand(command string, expectResponse bool, readChannel chan string, conn *net.UnixConn) error {
 	_, err := io.WriteString(conn, command+"\n")
 
 	if err != nil {
 		return err
 	}
 
-	response, more := <-readChannel
+	if expectResponse {
+		response, more := <-readChannel
 
-	if !more || strings.HasPrefix(response, "SUCCESS:") {
-		return nil
+		if !more || strings.HasPrefix(response, "SUCCESS:") {
+			return nil
+		} else {
+			return errors.New(response)
+		}
 	} else {
-		return errors.New(response)
+		return nil
 	}
 }
 
@@ -399,10 +411,16 @@ func (m *OpenVPN) readerChannel(reader *bufio.Reader, readChannel chan string) {
 	}
 }
 
-func (m *OpenVPN) ExecCommand(command string) error {
+func (m *OpenVPN) ExecCommand(command string, expectResponse bool) error {
 	defer recover() // Ignore panics caused by writing to a closed channel
-	m.cmdChannel <- command
-	return <-m.respChannel
+	m.cmdChannel <- vpnCommand{command: command, expectResponse: expectResponse}
+
+	if expectResponse {
+		response := <-m.respChannel
+		return response
+	} else {
+		return nil
+	}
 }
 
 func (m *OpenVPN) Shutdown() {
