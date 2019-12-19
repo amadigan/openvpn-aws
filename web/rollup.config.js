@@ -7,9 +7,13 @@ import minify from 'rollup-plugin-babel-minify';
 import copy from 'rollup-plugin-copy';
 import cleanup from 'rollup-plugin-cleanup';
 import alias from '@rollup/plugin-alias';
+import html from '@rollup/plugin-html';
 
 const postcssPlugins = [
-  purgecss({content: ['src/*.html', 'src/*.js']}),
+  purgecss({
+    content: ['src/*.html', 'src/*.js'],
+    whitelist: ['bg-dark'],
+  }),
 ];
 
 const aliases = {
@@ -28,12 +32,25 @@ const rollupPlugins = [
   postcss({plugins: postcssPlugins}),
   copy({
     targets: [
-      {src: 'src/index.html', dest: 'dist/openvpn-aws/'},
       {src: 'src/fonts/*.woff2', dest: 'dist/openvpn-aws/fonts/'},
       {src: 'src/*.md', dest: 'dist/openvpn-aws/'},
       {src: 'conf/*', dest: 'dist/openvpn-aws/'},
       {src: 'src/robots.txt', dest: 'dist/openvpn-aws/'}
     ]
+  }),
+  html({
+    template: ({ attributes, files, publicPath, title }) => {
+      return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title></title>
+    <script type="module" src="${publicPath}${files.js[0].fileName}"></script>
+  </head>
+  <body class="bg-dark">
+  </body>
+</html>`;
+    }
   }),
 ];
 
@@ -41,7 +58,8 @@ const rollupConfig = {
   input: ['src/app.js'],
   output: {
     dir: 'dist/openvpn-aws',
-    format: 'esm'
+    format: 'esm',
+    entryFileNames: '[name]-[hash].js',
   },
   plugins: rollupPlugins,
   onwarn: function(warning, rollupWarn) {

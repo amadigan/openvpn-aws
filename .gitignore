@@ -5,3 +5,4 @@ node_modules
 web/dist
 web/build
 .local
+*-generated.go
