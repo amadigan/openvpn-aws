@@ -146,7 +146,11 @@ func (c *userManager) updateKeys(userGroups map[string][]string) (map[string]*vp
 
 			newKeys := make(map[string]string, len(keyIds))
 
+			var minKeyStrength int
+
 			c.lock.RLock()
+
+			minKeyStrength = c.confFile.KeyStrength / 8
 
 			userEntry := c.users[user]
 
@@ -177,13 +181,17 @@ func (c *userManager) updateKeys(userGroups map[string][]string) (map[string]*vp
 						return nil, err
 					}
 
-					hash, err := c.certificateManager.Add(user, keyId, publicKey)
+					if publicKey.Size() >= minKeyStrength {
+						hash, err := c.certificateManager.Add(user, keyId, publicKey)
 
-					if err != nil {
-						return nil, err
+						if err != nil {
+							return nil, err
+						}
+
+						newKeys[keyId] = hash
+					} else {
+						newKeys[keyId] = ""
 					}
-
-					newKeys[keyId] = hash
 				}
 			}
 
