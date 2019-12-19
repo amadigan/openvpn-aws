@@ -48,7 +48,7 @@ func BootVPN(conf config.ConfigurationBackend, root string) (rv *VPNManager, err
 		backend:         conf,
 	}
 
-	file, err := conf.FetchFile("vpn.conf")
+	file, tag, err := conf.FetchFile("vpn.conf", "")
 
 	if file == nil {
 		if err == nil {
@@ -76,7 +76,7 @@ func BootVPN(conf config.ConfigurationBackend, root string) (rv *VPNManager, err
 		return nil, err
 	}
 
-	userConfigs, err := vpn.users.buildUserConfigs(configFile)
+	userConfigs, err := vpn.users.buildUserConfigs(configFile, tag)
 
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func BootVPN(conf config.ConfigurationBackend, root string) (rv *VPNManager, err
 }
 
 func (m *VPNManager) fetchKeys(name string) (cert, key []byte, err error) {
-	file, err := m.backend.FetchFile("server.crt")
+	file, _, err := m.backend.FetchFile("server.crt", "")
 
 	if err != nil {
 		return nil, nil, err
@@ -207,7 +207,7 @@ func (m *VPNManager) fetchKeys(name string) (cert, key []byte, err error) {
 		return nil, nil, err
 	}
 
-	file, err = m.backend.FetchFile("server.key")
+	file, _, err = m.backend.FetchFile("server.key", "")
 
 	if file == nil {
 		if err == nil {

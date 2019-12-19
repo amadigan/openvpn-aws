@@ -13,6 +13,7 @@ type userManager struct {
 	backend            config.ConfigurationBackend
 	certificateManager *ca.CertificateManager
 	confFile           *config.ConfigFile
+	confTag            string
 	netinfo            *config.NetworkInfo
 	users              map[string]*userKeys
 	userGroups         map[string][]string
@@ -44,24 +45,30 @@ func initUserManager(backend config.ConfigurationBackend, root string) (*userMan
 }
 
 func (c *userManager) update() (map[string]*vpnUser, *time.Duration, error) {
-	file, err := c.backend.FetchFile("vpn.conf")
+	file, tag, err := c.backend.FetchFile("vpn.conf", c.confTag)
 
-	if file == nil {
+	if err != nil || (file == nil && tag == "") {
 		return nil, nil, err
 	}
 
-	confFile, err := config.ParseConfig(file)
-	file.Close()
-	if err != nil {
-		return nil, nil, err
+	var confFile *config.ConfigFile
+
+	if file != nil {
+		confFile, err = config.ParseConfig(file)
+		file.Close()
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		confFile = c.confFile
 	}
 
-	userConfs, err := c.buildUserConfigs(confFile)
+	userConfs, err := c.buildUserConfigs(confFile, tag)
 
 	return userConfs, confFile.WatchTime, err
 }
 
-func (c *userManager) buildUserConfigs(confFile *config.ConfigFile) (map[string]*vpnUser, error) {
+func (c *userManager) buildUserConfigs(confFile *config.ConfigFile, tag string) (map[string]*vpnUser, error) {
 	netinfo, err := c.backend.FetchNetworkInfo()
 
 	if netinfo == nil {
@@ -71,6 +78,7 @@ func (c *userManager) buildUserConfigs(confFile *config.ConfigFile) (map[string]
 
 	c.lock.Lock()
 	c.confFile = confFile
+	c.confTag = tag
 	c.netinfo = netinfo
 	c.lock.Unlock()
 
