@@ -114,25 +114,32 @@ export function hex(buf) {
   return str;
 }
 
-export function request(url, type = 'text') {
-  let xhr = new XMLHttpRequest();
-  xhr.responseType = type;
-  xhr.timeout = 10000;
-  return new Promise((resolve, reject)=>{
-    xhr.ontimeout = ()=>{console.log('Timeout for ' + url)}
-    xhr.onreadystatechange = ()=>{
-      if (xhr.readyState == 4) {
-        if (xhr.status == 200 || xhr.status == 0) {
-          resolve(xhr.response);
-        } else {
-          reject({status: xhr.status, response: xhr.response});
-        }
-      }
-    };
+export async function request(url, type = 'text') {
+  let complete = false;
+  let abort = new AbortController();
 
-    xhr.open('GET', url);
-    xhr.send();
-  });
+  setTimeout(()=>{
+    if (!complete) {
+      abort.abort();
+    }
+  }, 10000);
+
+  let response;
+
+  try {
+    response = await fetch(url, {signal: abort.signal})
+  } finally {
+    complete = true;
+  }
+
+  if (response.status != 200 && response.status != 0) {
+    throw `GET ${url} failed with status ${response.status}`;
+  }
+
+  switch (type) {
+    case 'text': return response.text();
+    case 'json': return response.json();
+  }
 }
 
 export function multiRequest(map) {
