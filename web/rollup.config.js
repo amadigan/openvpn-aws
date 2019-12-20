@@ -16,6 +16,14 @@ const aliases = {
   jquery : 'node_modules/jquery/dist/jquery.slim.js'
 };
 
+const copyFiles = [
+  {src: 'src/index.html', dest: 'dist/openvpn-aws/'},
+  {src: 'src/fonts/*.woff2', dest: 'dist/openvpn-aws/fonts/'},
+  {src: 'src/*.md', dest: 'dist/openvpn-aws/'},
+  {src: 'conf/*', dest: 'dist/openvpn-aws/'},
+  {src: 'src/robots.txt', dest: 'dist/openvpn-aws/'}
+];
+
 const rollupPlugins = [
   alias({
     entries: aliases
@@ -26,15 +34,7 @@ const rollupPlugins = [
   }),
   commonjs(),
   postcss({plugins: postcssPlugins}),
-  copy({
-    targets: [
-      {src: 'src/index.html', dest: 'dist/openvpn-aws/'},
-      {src: 'src/fonts/*.woff2', dest: 'dist/openvpn-aws/fonts/'},
-      {src: 'src/*.md', dest: 'dist/openvpn-aws/'},
-      {src: 'conf/*', dest: 'dist/openvpn-aws/'},
-      {src: 'src/robots.txt', dest: 'dist/openvpn-aws/'}
-    ]
-  }),
+  copy({targets: copyFiles}),
 ];
 
 const rollupConfig = {
@@ -54,6 +54,8 @@ const rollupConfig = {
 if (process.env.BUILD == 'prod') {
   postcssPlugins.push(cssnano());
   rollupPlugins.push(minify(), cleanup());
+} else {
+  copyFiles.push({src: 'src/serverca.crt', dest: 'dist/openvpn-aws'})
 }
 
 export default rollupConfig;
