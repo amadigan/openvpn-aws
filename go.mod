@@ -10,6 +10,7 @@ require (
 	github.com/miekg/dns v1.1.22
 	github.com/pborman/getopt v0.0.0-20190409184431-ee0cd42419d3
 	github.com/pkg/errors v0.8.1 // indirect
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915 // indirect
 	golang.org/x/net v0.0.0-20191126235420-ef20fe5d7933
 	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
 	golang.org/x/tools v0.0.0-20191204011308-9611592c72f6 // indirect

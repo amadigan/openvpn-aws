@@ -1,4 +1,4 @@
-package http
+package web
 
 import (
 	"strconv"
@@ -6,6 +6,8 @@ import (
 )
 
 const DateFormat = "Mon, Jan 02 2006 15:04:05 GMT"
+
+const MarkdownType = "text/markdown; charset=utf-8"
 
 type Bundle map[string]File
 

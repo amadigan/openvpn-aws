@@ -15,7 +15,7 @@ RUN go install ./tools/openvpn-aws-bundlegen
 RUN ldd /go/bin/openvpn-aws-bundlegen
 COPY --from=node-build /source/dist web/dist
 RUN find web/dist
-RUN /go/bin/openvpn-aws-bundlegen web/dist/openvpn-aws internal/http/bundle-generated.go
+RUN /go/bin/openvpn-aws-bundlegen web/dist/openvpn-aws internal/web/bundle-generated.go
 RUN go install ./...
 RUN du -h /go/bin/openvpn-aws
 RUN ldd /go/bin/openvpn-aws

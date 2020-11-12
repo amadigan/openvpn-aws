@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amadigan/openvpn-aws/internal/http"
+	"github.com/amadigan/openvpn-aws/internal/web"
 
 	"github.com/google/brotli/go/cbrotli"
 )
@@ -37,7 +37,7 @@ type bundleContext struct {
 
 func main() {
 	if mime.TypeByExtension(".md") == "" {
-		mime.AddExtensionType(".md", "text/markdown; charset=utf-8")
+		mime.AddExtensionType(".md", web.TypeMarkdown)
 	}
 
 	if mime.TypeByExtension(".ovpn") == "" {
@@ -61,15 +61,15 @@ func main() {
 
 	context := bundleContext{
 		root:         root,
-		lastModified: time.Now().UTC().Format(http.DateFormat),
+		lastModified: time.Now().UTC().Format(web.DateFormat),
 	}
 
-	bundle := http.Bundle{}
+	bundle := web.Bundle{}
 
 	err = walk(context, bundle, root)
 
 	writer := bytes.NewBuffer(nil)
-	writer.WriteString("package http\n\n")
+	writer.WriteString("package web\n\n")
 	writer.WriteString("func init() {\n")
 	writer.WriteString("UIBundle = Bundle{\n")
 
@@ -116,7 +116,7 @@ func main() {
 	}
 }
 
-func walk(context bundleContext, bundle http.Bundle, dir string) error {
+func walk(context bundleContext, bundle web.Bundle, dir string) error {
 	infos, err := ioutil.ReadDir(dir)
 
 	if err != nil {
@@ -140,7 +140,7 @@ func walk(context bundleContext, bundle http.Bundle, dir string) error {
 	return nil
 }
 
-func readFile(path string, context bundleContext, info os.FileInfo) (key string, fileObj http.File, err error) {
+func readFile(path string, context bundleContext, info os.FileInfo) (key string, fileObj web.File, err error) {
 	key = strings.TrimPrefix(path, context.root)
 
 	if !strings.HasPrefix(key, "/") {
